@@ -2,19 +2,29 @@ import express, { Request, Response } from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import axios from "axios";
+import { ConvexHttpClient } from "convex/browser";
+import { api } from "../../convex/_generated/api.js";
 
-// Load environment variables from .env file
-dotenv.config();
+// Load environment variables from .env.local file
+dotenv.config({ path: "../.env.local" });
 
 const app = express();
+
 const port = process.env.PORT;
+const convexURL = process.env.CONVEX_URL;
+
+if (!port || !convexURL) {
+  console.log(port, convexURL, process.env);
+  throw new Error("Please define PORT and CONVEX_URL in .env file");
+}
+
+const client = new ConvexHttpClient(convexURL);
 
 app.use(cors());
 
 // Middleware for parsing JSON
 app.use(express.json());
 
-// Define a test route
 app.post("/api/personPrompt", async (req: Request, res: Response) => {
   const { content } = req.body;
   if (!content) {
@@ -87,6 +97,28 @@ app.post("/api/personPrompt", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error with OpenAI API:", error);
     res.status(500).json({ error: "Error with OpenAI API" });
+  }
+});
+
+app.get("/api/convexTest", async (req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (
+      !authHeader ||
+      !authHeader.startsWith("Bearer ") ||
+      authHeader.split(" ").length !== 2
+    ) {
+      res.status(401).json({ error: "Unauthorized: Missing Bearer Token" });
+      return;
+    }
+    const token = authHeader.split(" ")[1];
+    client.setAuth(token);
+
+    const user = await client.query(api.users.viewer);
+    res.json({ success: true, user });
+  } catch (err) {
+    console.error("Error with convex request", err);
+    res.status(500).json({ error: "Error making convex request" });
   }
 });
 
