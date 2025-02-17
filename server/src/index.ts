@@ -4,6 +4,7 @@ import cors from "cors";
 import axios from "axios";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../convex/_generated/api.js";
+import { computeFragmentsAsync } from "./ai.js";
 
 // Load environment variables from .env.local file
 dotenv.config({ path: "../.env.local" });
@@ -98,6 +99,23 @@ app.post("/api/personPrompt", async (req: Request, res: Response) => {
     console.error("Error with OpenAI API:", error);
     res.status(500).json({ error: "Error with OpenAI API" });
   }
+});
+
+app.post("/api/fileMessage", async (req: Request, res: Response) => {
+  const { content } = req.body;
+  if (!content) {
+    res.status(400).json({ error: "No content provided" });
+    return;
+  }
+
+  (await computeFragmentsAsync(content)).match(
+    (fragments) => {
+      res.json({ success: true, fragments });
+    },
+    (message) => {
+      res.status(500).json({ error: message });
+    }
+  );
 });
 
 app.get("/api/convexTest", async (req: Request, res: Response) => {

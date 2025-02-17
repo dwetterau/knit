@@ -2,8 +2,8 @@ import "./App.css";
 import { LoginButton } from "./authentication/login_button";
 import { LogoutButton } from "./authentication/logout_button";
 import { useStoreUser } from "./authentication/use_store_user";
-import { PersonPrompt } from "./prompt/PersonPrompt";
 import { ConvexTest } from "./api/convex_test";
+import { FileMessage } from "./prompt/FileMessage";
 
 function App() {
   const { isAuthenticated, isLoading } = useStoreUser();
@@ -15,7 +15,7 @@ function App() {
         {isLoading && <div>Loading...</div>}
         {isAuthenticated && (
           <>
-            <PersonPrompt />
+            <FileMessage />
             <ConvexTest />
             <LogoutButton />
           </>
